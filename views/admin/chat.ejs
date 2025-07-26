@@ -12,7 +12,7 @@
             <a href="/admin/users" class="nav-btn">Users</a>
             <a href="/admin/chat" class="nav-btn active">Chat</a>
             <a href="/admin/updates" class="nav-btn">Updates</a>
-            <a href="#" onclick="adminLogout()" class="nav-btn logout">Logout</a>
+            <a href="#" onclick="logout()" class="nav-btn logout">Logout</a>
         </div>
         
         <div class="chat-management-container">
@@ -132,6 +132,9 @@ function sendMessage() {
     
     if (!message || !currentSessionId) return;
     
+    // Clear input first
+    input.value = '';
+    
     // Send message via socket
     socket.emit('chat-message', {
         sessionId: currentSessionId,
@@ -139,24 +142,25 @@ function sendMessage() {
         senderType: 'admin',
         message: message
     });
-    
-    input.value = '';
 }
 
 // Listen for incoming messages
 socket.on('chat-message', (data) => {
-    if (data.sessionId === currentSessionId || currentSessionId === null) {
+    if (data.sessionId === currentSessionId) {
         addMessageToChat(data);
     }
 });
 
-function adminLogout() {
-    fetch('/auth/logout', { method: 'POST' })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                window.location.href = result.redirect;
-            }
-        });
-}
 </script>
+
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirm Logout</h3>
+        <p>Are you sure you want to log out of your account?</p>
+        <div class="modal-actions">
+            <button id="cancelLogout" class="btn btn-secondary">Cancel</button>
+            <button id="confirmLogout" class="btn btn-primary">Yes, Logout</button>
+        </div>
+    </div>
+</div>

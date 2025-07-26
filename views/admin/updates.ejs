@@ -12,7 +12,7 @@
             <a href="/admin/users" class="nav-btn">Users</a>
             <a href="/admin/chat" class="nav-btn">Chat</a>
             <a href="/admin/updates" class="nav-btn active">Updates</a>
-            <a href="#" onclick="adminLogout()" class="nav-btn logout">Logout</a>
+            <a href="#" onclick="logout()" class="nav-btn logout">Logout</a>
         </div>
         
         <div class="updates-actions">
@@ -216,6 +216,37 @@ document.getElementById('createUpdateForm').addEventListener('submit', async (e)
     e.preventDefault();
     
     const formData = new FormData(e.target);
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    
+    // Validate required fields
+    const title = formData.get('title')?.trim();
+    const excerpt = formData.get('excerpt')?.trim();
+    const content = formData.get('content')?.trim();
+    const image = formData.get('image');
+    
+    if (!title || title.length < 5) {
+        showNotification('Title must be at least 5 characters', 'error');
+        return;
+    }
+    
+    if (!excerpt || excerpt.length < 10) {
+        showNotification('Excerpt must be at least 10 characters', 'error');
+        return;
+    }
+    
+    if (!content || content.length < 50) {
+        showNotification('Content must be at least 50 characters', 'error');
+        return;
+    }
+    
+    if (!image || image.size === 0) {
+        showNotification('Please select an image', 'error');
+        return;
+    }
+    
+    // Set loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating...';
     
     try {
         const response = await fetch('/admin/updates', {
@@ -228,24 +259,18 @@ document.getElementById('createUpdateForm').addEventListener('submit', async (e)
         if (result.success) {
             showNotification('Update created successfully!', 'success');
             document.getElementById('createUpdateModal').style.display = 'none';
+            e.target.reset();
             location.reload();
         } else {
             showNotification(result.message || 'Failed to create update', 'error');
         }
     } catch (error) {
         showNotification('Network error. Please try again.', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Update';
     }
 });
-
-function adminLogout() {
-    fetch('/auth/logout', { method: 'POST' })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                window.location.href = result.redirect;
-            }
-        });
-}
 
 // Modal handling
 document.querySelector('.close-modal').addEventListener('click', () => {
@@ -258,3 +283,15 @@ window.addEventListener('click', (e) => {
     }
 });
 </script>
+
+<!-- Logout Confirmation Modal -->
+<div id="logoutModal" class="modal">
+    <div class="modal-content">
+        <h3>Confirm Logout</h3>
+        <p>Are you sure you want to log out of your account?</p>
+        <div class="modal-actions">
+            <button id="cancelLogout" class="btn btn-secondary">Cancel</button>
+            <button id="confirmLogout" class="btn btn-primary">Yes, Logout</button>
+        </div>
+    </div>
+</div>

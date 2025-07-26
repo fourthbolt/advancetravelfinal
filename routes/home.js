@@ -112,7 +112,8 @@ router.post('/apply', [
     if (!errors.isEmpty()) {
       return res.status(400).json({ 
         success: false, 
-        errors: errors.array() 
+        message: 'Please check your input and try again.',
+        errors: errors.array()
       });
     }
 
@@ -125,12 +126,14 @@ router.post('/apply', [
       req.session.tempUser = {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        phone: user.phone,
+        preferredCountry: user.preferredCountry
       };
       
       return res.json({ 
         success: true, 
-        message: 'Welcome back! Please complete your registration...'
+        message: 'Welcome back! Redirecting to complete your registration...'
       });
     }
 
@@ -157,14 +160,14 @@ router.post('/apply', [
 
     res.json({ 
       success: true, 
-      message: 'Initial application received! Please complete your registration...'
+      message: 'Application received! Redirecting to complete your registration...'
     });
 
   } catch (error) {
     console.error('Application submission error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Something went wrong. Please try again.' 
+      message: 'Network error occurred. Please try again.'
     });
   }
 });

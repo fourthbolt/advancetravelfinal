@@ -208,6 +208,32 @@ class AdvanceTravels {
     // Store original button content
     const originalContent = submitBtn.innerHTML;
     
+    // Validate form before submission
+    const name = formData.get('name')?.trim();
+    const email = formData.get('email')?.trim();
+    const phone = formData.get('phone')?.trim();
+    const preferredCountry = formData.get('preferredCountry');
+    
+    if (!name || name.length < 2) {
+      this.showNotification('Please enter a valid name (at least 2 characters)', 'error');
+      return;
+    }
+    
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.showNotification('Please enter a valid email address', 'error');
+      return;
+    }
+    
+    if (!phone || phone.length < 10) {
+      this.showNotification('Please enter a valid phone number', 'error');
+      return;
+    }
+    
+    if (!preferredCountry) {
+      this.showNotification('Please select your preferred country', 'error');
+      return;
+    }
+    
     this.setLoadingState(submitBtn, true);
     
     try {
@@ -230,14 +256,11 @@ class AdvanceTravels {
           window.location.href = '/extended-registration';
         }, 1500);
       } else {
-        this.showNotification(result.message || 'Something went wrong', 'error');
-        if (result.errors) {
-          this.displayFormErrors(form, result.errors);
-        }
+        this.showNotification(result.message || 'Please check your input and try again', 'error');
       }
     } catch (error) {
       console.error('Application submission error:', error);
-      this.showNotification('Network error. Please try again.', 'error');
+      this.showNotification('Network connection error. Please check your internet and try again.', 'error');
     } finally {
       this.setLoadingState(submitBtn, false, originalContent);
     }
@@ -575,33 +598,57 @@ class AdvanceTravels {
   // Logout Confirmation
   setupLogoutConfirmation() {
     window.logout = () => {
-      this.openModal('logoutModal');
+      const modal = document.getElementById('logoutModal');
+      if (modal) {
+        this.openModal('logoutModal');
+      } else {
+        // Fallback if modal doesn't exist
+        if (confirm('Are you sure you want to logout?')) {
+          this.performLogout();
+        }
+      }
     };
     
     const confirmBtn = document.getElementById('confirmLogout');
     const cancelBtn = document.getElementById('cancelLogout');
     
     confirmBtn?.addEventListener('click', async () => {
-      try {
-        const response = await fetch('/auth/logout', { method: 'POST' });
-        const result = await response.json();
-        
-        if (result.success) {
-          this.showNotification('Logged out successfully', 'success');
-          this.closeModal('logoutModal');
-          setTimeout(() => {
-            window.location.href = result.redirect;
-          }, 1000);
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-        this.showNotification('Logout failed', 'error');
-      }
+      this.closeModal('logoutModal');
+      this.performLogout();
     });
     
     cancelBtn?.addEventListener('click', () => {
       this.closeModal('logoutModal');
     });
+    
+    // Admin logout function
+    window.adminLogout = () => {
+      const modal = document.getElementById('logoutModal');
+      if (modal) {
+        this.openModal('logoutModal');
+      } else {
+        if (confirm('Are you sure you want to logout?')) {
+          this.performLogout();
+        }
+      }
+    };
+  }
+  
+  async performLogout() {
+    try {
+      const response = await fetch('/auth/logout', { method: 'POST' });
+      const result = await response.json();
+      
+      if (result.success) {
+        this.showNotification('Logged out successfully', 'success');
+        setTimeout(() => {
+          window.location.href = result.redirect;
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      this.showNotification('Logout failed', 'error');
+    }
   }
 
   // Testimonials
